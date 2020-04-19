@@ -1,7 +1,7 @@
 import Chatkit from '@pusher/chatkit-client'
 
 
-export default ({ state, actions }, { id, token }) =>
+export default ({ state, actions }) =>
 {
   
   let user = {
