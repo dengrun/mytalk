@@ -1,6 +1,6 @@
 {
-  "short_name": "Pusher Chatkit Demo",
-  "name": "Pusher Chatkit SDK Demo",
+  "short_name": "MyTalk",
+  "name": "MyTalk",
   "icons": [
     {
       "src": "favicon.ico",

@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom'
 import { version } from '../package.json'
 import './index.css'
 
-import { UserHeader } from './components/UserHeader'
+import UserHeader from './components/UserHeader'
 import { UserList } from './components/UserList'
 import { MessageList } from './components/MessageList'
 import { TypingIndicator } from './components/TypingIndicator'
@@ -16,10 +16,16 @@ import { JoinRoomScreen } from './components/JoinRoomScreen'
 
 import ChatManager from './chatkit'
 
-// import { UserSession, AppConfig } from 'blockstack';
-// import * as blockstack from 'blockstack'
-//const appConfig = new AppConfig(['store_write', 'publish_data'])
-//const userSession = new UserSession({ appConfig: appConfig })
+import { UserSession, AppConfig } from 'blockstack';
+import { User, getConfig, configure } from 'radiks';
+
+const appConfig = new AppConfig(['store_write', 'publish_data'])
+const userSession = new UserSession({ appConfig: appConfig })
+
+configure({
+  apiServer: 'http://localhost:1260',
+  userSession
+});
 
 // --------------------------------------
 // Application
@@ -225,24 +231,34 @@ class View extends React.Component {
     },
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     'Notification' in window && Notification.requestPermission()
-    console.log(existingUser);
-    // existingUser
-    //   ? ChatManager(this, JSON.parse(existingUser))
-    //   : fetch('https://chatkit-demo-server.herokuapp.com/auth', {
-    //       method: 'POST',
-    //       body: JSON.stringify({ code: authCode }),
-    //     })
-    //       .then(res => res.json())
-    //       .then(user => {
-    //         user.version = version
-    //         window.localStorage.setItem('chatkit-user', JSON.stringify(user))
-    //         window.history.replaceState(null, null, window.location.pathname)
-    //         ChatManager(this, user)
-    //       })
+    
 
     ChatManager(this, JSON.parse(existingUser))
+
+    if (userSession.isSignInPending()) {
+      try {
+        await userSession.handlePendingSignIn().then((userData) => {
+          console.log(userData);
+  
+          window.history.replaceState({}, document.title, "/")
+          this.setState({ userData: userData })
+        });
+      } catch {
+
+      }
+      
+    }
+
+    try {
+      const currentUser = await User.createWithCurrentUser();
+    } catch {
+      
+    }
+    
+
+    //this.fetchData()
   }
 
   render() {
@@ -259,7 +275,7 @@ class View extends React.Component {
     return (
       <main>
         <aside data-open={sidebarOpen}>
-          <UserHeader user={user} />
+          <UserHeader user={user} userSession={userSession} />
           <RoomList
             user={user}
             rooms={user.rooms}

@@ -1,15 +1,71 @@
 import React from 'react'
-import style from './index.module.css'
+import style from './index.module.css';
+import { Person } from 'blockstack';
 
-const placeholder =
-  'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+class UserHeader extends React.Component {
+  constructor(props) {
+    super(props);
 
-export const UserHeader = ({ user = {} }) => (
-  <header className={style.component}>
-    <img src={user.avatarURL || placeholder} alt={user.name} />
-    <div>
-      <h3>{user.name}</h3>
-      <h5>{user.id && `@${user.id}`}</h5>
-    </div>
-  </header>
-)
+    this.state = {
+  	  person: {},
+  	};
+  }
+
+  login=(e)=> {
+    this.props.userSession.redirectToSignIn();
+  }
+
+  logout=()=> {
+    this.props.userSession.signUserOut(window.location.origin);
+  }
+
+  componentWillMount() {
+    if(this.props.userSession.isUserSignedIn()){
+      console.log(this.props.userSession.loadUserData().profile);
+
+      try {
+        let person = new Person(this.props.userSession.loadUserData().profile);
+        let personjson = person.toJSON();
+
+        this.setState({
+          person: personjson,
+        });
+      } catch {
+
+      }
+      
+
+    }
+  }
+
+  render() {
+    let user = this.props.user;
+    const { person } = this.state;
+    
+
+    let userAccount = JSON.parse(localStorage.getItem('blockstack-session')).userData.username;
+    
+     
+
+    return (
+      <header className={style.component}>
+        {
+          !this.props.userSession.isUserSignedIn() ?
+          <button onClick={this.login.bind(this)}>Login</button>
+          :
+          <span>
+            <img src={person.avatarUrl} alt={person.name} />
+            <button onClick={this.logout.bind(this)}>Logout</button>
+            <div>
+              <h3>{person.name}</h3>
+              <h5>{userAccount}</h5>
+            </div>
+          </span>
+        }
+        
+      </header>
+    )
+  }
+}
+
+export default UserHeader;

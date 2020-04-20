@@ -1,5 +1,3 @@
-import Chatkit from '@pusher/chatkit-client'
-
 
 export default ({ state, actions }) =>
 {
