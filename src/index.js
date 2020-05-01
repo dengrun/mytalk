@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
+import moment from 'moment';
 import { version } from '../package.json'
 import './index.css'
 
@@ -18,12 +19,16 @@ import ChatManager from './chatkit'
 
 import { UserSession, AppConfig } from 'blockstack';
 import { User, getConfig, configure } from 'radiks';
+import { UserGroup } from 'radiks';
+
+import Room from './models/Room.js';
+import RoomUser from './models/RoomUser.js';
 
 const appConfig = new AppConfig(['store_write', 'publish_data'])
 const userSession = new UserSession({ appConfig: appConfig })
 
 configure({
-  apiServer: 'http://localhost:1260',
+  apiServer: 'http://localhost:5000',
   userSession
 });
 
@@ -39,6 +44,12 @@ class View extends React.Component {
     typing: {},
     sidebarOpen: false,
     userListOpen: window.innerWidth > 1000,
+
+    roomlist: [
+        
+    ],
+    selectedroom: '',
+    room: new Room(),
   }
 
   actions = {
@@ -85,9 +96,43 @@ class View extends React.Component {
       //   hooks: { onMessage: this.actions.addMessage },
       // }),
       {},
-    createRoom: options =>
+    createRoom: async(options) =>
       //this.state.user.createRoom(options).then(this.actions.joinRoom),
-      alert('创建组:' + options.name),
+      {
+        alert('创建组:' + options.name);
+        const group = new UserGroup({ name: options.name });
+        const groupCreate = await group.create();
+
+        let today = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+        const room = new Room({
+          owner: JSON.parse(localStorage.getItem('blockstack-session')).userData.username,
+          roomid: groupCreate._id,
+          signingkeyid: groupCreate.attrs.signingKeyId,
+          privatekey: groupCreate.privateKey,
+          name: groupCreate.attrs.name,
+          create_time: today,
+          update_time: today
+        });
+        console.log(room);
+        await room.save();
+
+        // 保存组用户
+        const roomuser = new RoomUser({
+          owner: JSON.parse(localStorage.getItem('blockstack-session')).userData.username,
+          roomid: groupCreate._id,
+          membername: JSON.parse(localStorage.getItem('blockstack-session')).userData.username,
+          create_time: today,
+          update_time: today
+        });
+        console.log(roomuser)
+        await roomuser.save()
+
+        let tmp_roomlist = this.state.roomlist;
+        tmp_roomlist.push(room);
+        this.setState({
+          roomlist: tmp_roomlist
+        });
+      },
     createConvo: options => {
       if (options.user.id !== this.state.user.id) {
         const exists = this.state.user.rooms.find(
@@ -231,6 +276,40 @@ class View extends React.Component {
     },
   }
 
+
+  async fetchData() {
+
+    //读取用户组
+    const fetchRoomUserResult = await RoomUser.fetchList({});
+      
+    console.log(fetchRoomUserResult);
+
+    let result=[];
+    for(let i=0;i<fetchRoomUserResult.length;i++){
+      console.log(fetchRoomUserResult[i].attrs.roomid);
+      const fetchRoomResult = await Room.findOne({"roomid": fetchRoomUserResult[i].attrs.roomid})
+      let tmpitem = {
+        ...fetchRoomUserResult[i].attrs,
+        name: fetchRoomResult.attrs.name
+      }
+      result.push(tmpitem);
+    }
+
+    console.log(result);
+    console.log(result.length);
+
+    if (result.length>0){
+      this.setState({
+        roomlist: result,
+        selectedroom: result[0].name || ''
+      });
+    }
+      
+
+
+    
+  }
+
   async componentDidMount() {
     'Notification' in window && Notification.requestPermission()
     
@@ -253,12 +332,13 @@ class View extends React.Component {
 
     try {
       const currentUser = await User.createWithCurrentUser();
+      console.log(currentUser);
     } catch {
       
     }
     
 
-    //this.fetchData()
+    this.fetchData()
   }
 
   render() {
@@ -268,6 +348,7 @@ class View extends React.Component {
       messages,
       typing,
       sidebarOpen,
+      roomlist,
       userListOpen,
     } = this.state
     const { createRoom, createConvo, removeUserFromRoom } = this.actions
@@ -282,6 +363,7 @@ class View extends React.Component {
             messages={messages}
             typing={typing}
             current={room}
+            roomlist={roomlist}
             actions={this.actions}
           />
           {user.id && <CreateRoomForm submit={createRoom} />}
@@ -302,6 +384,7 @@ class View extends React.Component {
               {userListOpen && (
                 <UserList
                   room={room}
+                  roomlist={roomlist}
                   current={user.id}
                   createConvo={createConvo}
                   removeUser={removeUserFromRoom}

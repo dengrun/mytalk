@@ -15,13 +15,13 @@ export const UserList = ({ room, current, createConvo, removeUser }) => (
       </li>
     ))}
     {
-      room.users.length < 5 ? (
+      (
         <li className={style.hint} >
           <div>
             Type <span>/invite &lt;username&gt;</span> to invite
         </div>
         </li>
-      ) : null
+      ) 
     }
   </ul>
 )

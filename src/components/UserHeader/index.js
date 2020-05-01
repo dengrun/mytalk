@@ -43,7 +43,12 @@ class UserHeader extends React.Component {
     const { person } = this.state;
     
 
-    let userAccount = JSON.parse(localStorage.getItem('blockstack-session')).userData.username;
+    let userAccount;
+    try{
+      userAccount = JSON.parse(localStorage.getItem('blockstack-session')).userData.username;
+    } catch {
+      userAccount = "";
+    }
     
      
 

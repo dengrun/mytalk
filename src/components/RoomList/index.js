@@ -14,14 +14,12 @@ export const RoomList = ({
   messages,
   current,
   typing,
+  roomlist = [],
   actions,
 }) => (
   <ul className={style.component}>
-    {rooms.map(room => {
-      const messageKeys = Object.keys(messages[room.id] || {})
-      const latestMessage =
-        messageKeys.length > 0 && messages[room.id][messageKeys.pop()]
-      const firstUser = room.users.find(x => x.id !== user.id)
+    {roomlist.map(room => {
+
       const order = 3
       const unreadCount = 5
       return (
@@ -31,14 +29,12 @@ export const RoomList = ({
           onClick={e => actions.joinRoom(room)}
           style={{ order }}
         >
-          {room.name.match(user.id) && firstUser ? (
-            <img src={firstUser.avatarURL} alt={firstUser.id} />
-          ) : (
-            Icon(room.isPrivate ? 'lock' : 'public')
+          { (
+            Icon('public')
           )}
           <col->
-            <p>{room.name.replace(user.id, '')}</p>
-            <span>{latestMessage && latestMessage.text}</span>
+            <p>{room.name}</p>
+            <span></span>
           </col->
           {room.id !== current.id && unreadCount ? (
             <label>{unreadCount}</label>
