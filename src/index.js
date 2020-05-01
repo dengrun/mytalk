@@ -28,7 +28,7 @@ const appConfig = new AppConfig(['store_write', 'publish_data'])
 const userSession = new UserSession({ appConfig: appConfig })
 
 configure({
-  apiServer: 'http://localhost:5000',
+  apiServer: 'http://47.96.122.242:5000',
   userSession
 });
 
